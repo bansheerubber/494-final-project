@@ -143,7 +143,7 @@ export default class Canvas {
 	mouseToWorld(x, y) {
 		const percentX = (x - window.innerWidth / 2) / window.innerWidth * 2
 		const percentY = -(y - window.innerHeight / 2) / window.innerHeight * 2
-		return vec2.fromValues(this.canvas.width * percentX, this.canvas.height * percentY)
+		return vec2.fromValues(this.worldWidth / 2 * percentX, this.worldHeight / 2 * percentY)
 	}
 
 	onResize() {
