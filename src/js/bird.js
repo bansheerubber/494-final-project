@@ -9,6 +9,7 @@ import {
 
 import {
 	flatten,
+	manhattan,
 	project,
  } from "./util"
 
@@ -207,7 +208,7 @@ export default class Bird {
 	}
 
 	separate() {
-		const desiredSeparation = this.scale[0] * 2
+		const desiredSeparation = this.scale[0] * 2.2
 		const sum = Bird.tempVector2
 		Bird.tempVector2[0] = 0
 		Bird.tempVector2[1] = 0
@@ -230,7 +231,7 @@ export default class Bird {
 				for(const bird of chunk.birds) {
 					Bird.tempVector1[0] = this.location[0] - bird.location[0]
 					Bird.tempVector1[1] = this.location[1] - bird.location[1]
-					const distance = vec2.length(Bird.tempVector1)
+					const distance = manhattan(this.location, bird.location)
 					if(bird !== this && distance < desiredSeparation) {
 						vec2.normalize(Bird.tempVector1, Bird.tempVector1)
 						sum[0] += Bird.tempVector1[0] / (distance * 10)
@@ -252,8 +253,8 @@ export default class Bird {
 			Bird.tempVector1[1] = sum[1] - this.velocity[1]
 
 			const steer = vec2.normalize(Bird.tempVector1, Bird.tempVector1)
-			steer[0] *= 1000
-			steer[1] *= 1000
+			steer[0] *= 1500
+			steer[1] *= 1500
 
 			this.force(steer)
 		}
@@ -281,7 +282,7 @@ export default class Bird {
 				// chunk.searched()
 				
 				for(const bird of chunk.birds) {
-					if(bird !== this && vec2.distance(bird.location, this.location) < neighborDistance) {
+					if(bird !== this && manhattan(bird.location, this.location) < neighborDistance) {
 						sum[0] += bird.velocity[0]
 						sum[1] += bird.velocity[1]
 						count++
