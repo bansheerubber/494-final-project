@@ -10,7 +10,7 @@ export default class ChunkManager {
 		
 		this.chunksMap = {}
 		this.chunks = new Set()
-		this.chunkSize = 75
+		this.chunkSize = 100
 		this._debug = false
 	}
 

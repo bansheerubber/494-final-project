@@ -13,7 +13,7 @@ glMatrix.setMatrixArrayType(Array)
 const canvas = new Canvas("gl-canvas")
 canvas.render()
 
-for(let i = 0; i < 2000; i++) {
+for(let i = 0; i < 1500; i++) {
 	const bird = new Bird(canvas)
 	bird.location = vec3.fromValues(
 		(Math.random() * 2 - 1) * canvas.worldWidth / 2,
@@ -28,10 +28,8 @@ for(let i = 0; i < 2000; i++) {
 	)
 }
 
-for(let i = 0; i < 5; i++) {
-	const boulder = new Boulder(canvas)
-	boulder.location = vec2.fromValues(
-		(Math.random() * 2 - 1) * 200,
-		(Math.random() * 2 - 1) * 200
-	)
-}
+const boulder = new Boulder(canvas)
+boulder.location = vec2.fromValues(
+	(Math.random() * 2 - 1) * 200,
+	(Math.random() * 2 - 1) * 200
+)

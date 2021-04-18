@@ -187,7 +187,7 @@ export default class Canvas {
 		const startTime = time ? time : 0
 		const deltaTime = Math.min(((startTime - this.lastRender) + this.lastRenderTime) / 1000, 0.1)
 
-		document.getElementById("info").innerHTML = `${(1 / deltaTime).toFixed(1)} FPS<br>${this.chunkManager.getChunkDensity().toFixed(2)} bird density<br>${this.birds.size} boids<br>Click to move boulders<br>Ctrl+Click to add/delete a boulder<br>Shift+Click to resize a boulder<br>Press C to toggle chunk view`
+		document.getElementById("info").innerHTML = `${(1 / deltaTime).toFixed(1)} FPS<br>${this.chunkManager.getChunkDensity().toFixed(2)} boid density<br>${this.birds.size} boids<br>Click to move boulders<br>Ctrl+Click to add/delete a boulder<br>Shift+Click to resize a boulder<br>Press C to toggle chunk view`
 
 		// clear the screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

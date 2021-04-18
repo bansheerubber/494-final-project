@@ -220,7 +220,7 @@ export default class Bird {
 			else if(
 				distance < minimumDistance
 				&& vec2.dot(directionToBoulder, this.velocity) > 0
-				&& encounterRadius <= boulder.radius * 2
+				&& encounterRadius <= boulder.radius + 200
 			) {
 				closestBoulder = boulder
 				minimumDistance = distance
@@ -235,8 +235,8 @@ export default class Bird {
 			
 			const encounterRadius = vec2.length(normalToBall)
 
-			if(encounterRadius <= closestBoulder.radius * 2) {
-				vec2.scale(normalToBall, vec2.normalize(normalToBall, normalToBall), closestBoulder.radius * 2)
+			if(encounterRadius <= closestBoulder.radius + 200) {
+				vec2.scale(normalToBall, vec2.normalize(normalToBall, normalToBall), closestBoulder.radius + 200)
 
 				const steer = vec2.sub(Bird.tempVector7, this.velocity, normalToBall)
 				vec2.normalize(steer, steer)
@@ -303,7 +303,7 @@ export default class Bird {
 	}
 
 	align() {
-		const neighborDistance = 100
+		const neighborDistance = 200
 		const sum = vec2.set(Bird.tempVector2, 0, 0)
 		let count = 0
 
