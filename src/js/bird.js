@@ -80,8 +80,24 @@ export default class Bird {
 		}
 
 		// apply acceleration
-		this.velocity[0] += this.acceleration[0] * deltaTime + this.velocity[0] * deltaTime
-		this.velocity[1] += this.acceleration[1] * deltaTime + this.velocity[1] * deltaTime
+		// velocity += this.acceleration * deltaTime + this.velocity * deltaTime
+		this.velocity = vec2.add(
+			this.velocity,
+			vec2.add(
+				this.velocity,
+				this.velocity,
+				vec2.scale(
+					Bird.tempVector1,
+					this.velocity,
+					deltaTime
+				)
+			),
+			vec2.scale(
+				this.acceleration,
+				this.acceleration,
+				deltaTime
+			)
+		)
 		vec2.set(this.acceleration, 0, 0) // reset acceleration on every frame(?)
 
 		if(vec2.length(this.velocity) > Bird.maxSpeed) {
@@ -89,8 +105,16 @@ export default class Bird {
 		}
 
 		// apply velocity
-		this.location[0] += this.velocity[0] * deltaTime
-		this.location[1] += this.velocity[1] * deltaTime
+		// this.location = this.velocity * deltaTime
+		this.location = vec2.add(
+			this.location,
+			this.location,
+			vec2.scale(
+				Bird.tempVector1,
+				this.velocity,
+				deltaTime
+			)
+		)
 
 		// calculate which chunk we're in
 		this.chunkManager.handle(this)
@@ -154,8 +178,7 @@ export default class Bird {
 
 		if(steer) {
 			steer = vec2.normalize(steer, steer)
-			steer[0] *= Bird.wallForce
-			steer[1] *= Bird.wallForce
+			vec2.scale(steer, steer, Bird.wallForce)
 
 			this.force(steer)
 		}
@@ -166,54 +189,58 @@ export default class Bird {
 		let minimumDistance = 500
 		let direction = Bird.tempVector6
 		for(const boulder of this.canvas.boulders) {
-			const directionToBoulder = Bird.tempVector1
-			Bird.tempVector1[0] = boulder.location[0] - this.location[0]
-			Bird.tempVector1[1] = boulder.location[1] - this.location[1]
+			const directionToBoulder = vec2.sub(Bird.tempVector1, boulder.location, this.location)
 			
 			const distance = vec2.length(directionToBoulder)
-			const normalToBall = Bird.tempVector2
 			project(Bird.tempVector3, directionToBoulder, this.velocity)
-			normalToBall[0] = directionToBoulder[0] - Bird.tempVector3[0]
-			normalToBall[1] = directionToBoulder[1] - Bird.tempVector3[1]
+			const normalToBall = vec2.sub(Bird.tempVector2, directionToBoulder, Bird.tempVector3)
 
 			const encounterRadius = vec2.length(normalToBall)
 
 			if(distance < boulder.radius) {
 				const steer = vec2.set(Bird.tempVector7, -directionToBoulder[0], -directionToBoulder[1])
-				steer[0] *= Bird.collisionForce
-				steer[1] *= Bird.collisionForce
+				vec2.scale(steer, steer, Bird.collisionForce)
 				this.force(steer)
 
-				this.location[0] = -directionToBoulder[0] / distance * boulder.radius + boulder.location[0]
-				this.location[1] = -directionToBoulder[1] / distance * boulder.radius + boulder.location[1]
+				// directionToBoulder / -distance * boulder.radius + boulder.location
+				vec2.add(
+					this.location,
+					vec2.scale(
+						directionToBoulder,
+						vec2.scale(
+							directionToBoulder,
+							directionToBoulder,
+							1 / -distance
+						),
+						boulder.radius
+					),
+					boulder.location
+				)
 			}
-			else if(distance < minimumDistance && vec2.dot(directionToBoulder, this.velocity) > 0 && encounterRadius <= boulder.radius * 2) {
+			else if(
+				distance < minimumDistance
+				&& vec2.dot(directionToBoulder, this.velocity) > 0
+				&& encounterRadius <= boulder.radius * 2
+			) {
 				closestBoulder = boulder
 				minimumDistance = distance
-				direction[0] = directionToBoulder[0]
-				direction[1] = directionToBoulder[1]
+				vec2.copy(direction, directionToBoulder)
 			}
 		}
 		
 		if(closestBoulder) {
 			const normalToBall = Bird.tempVector4
 			project(Bird.tempVector5, direction, this.velocity)
-			normalToBall[0] = direction[0] - Bird.tempVector5[0]
-			normalToBall[1] = direction[1] - Bird.tempVector5[1]
+			vec2.sub(normalToBall, direction, Bird.tempVector5)
 			
 			const encounterRadius = vec2.length(normalToBall)
 
 			if(encounterRadius <= closestBoulder.radius * 2) {
-				vec2.normalize(normalToBall, normalToBall)
-				normalToBall[0] *= closestBoulder.radius * 2
-				normalToBall[1] *= closestBoulder.radius * 2
+				vec2.scale(normalToBall, vec2.normalize(normalToBall, normalToBall), closestBoulder.radius * 2)
 
-				const steer = Bird.tempVector7
-				steer[0] = this.velocity[0] - normalToBall[0]
-				steer[1] = this.velocity[1] - normalToBall[1]
+				const steer = vec2.sub(Bird.tempVector7, this.velocity, normalToBall)
 				vec2.normalize(steer, steer)
-				steer[0] *= Bird.obstacleForce
-				steer[1] *= Bird.obstacleForce
+				vec2.scale(steer, steer, Bird.obstacleForce)
 				this.force(steer)
 
 				return true
@@ -225,9 +252,7 @@ export default class Bird {
 
 	separate() {
 		const desiredSeparation = this.scale[0] * 2.2
-		const sum = Bird.tempVector2
-		Bird.tempVector2[0] = 0
-		Bird.tempVector2[1] = 0
+		const sum = vec2.set(Bird.tempVector2, 0, 0)
 		let count = 0
 
 		if(!this.chunk) {
@@ -245,13 +270,19 @@ export default class Bird {
 				// chunk.searched()
 				
 				for(const bird of chunk.birds) {
-					Bird.tempVector1[0] = this.location[0] - bird.location[0]
-					Bird.tempVector1[1] = this.location[1] - bird.location[1]
+					vec2.sub(Bird.tempVector1, this.location, bird.location)
 					const distance = manhattan(this.location, bird.location)
 					if(bird !== this && distance < desiredSeparation) {
 						vec2.normalize(Bird.tempVector1, Bird.tempVector1)
-						sum[0] += Bird.tempVector1[0] / (distance * 10)
-						sum[1] += Bird.tempVector1[1] / (distance * 10)
+						vec2.add(
+							sum,
+							sum,
+							vec2.scale(
+								Bird.tempVector1,
+								Bird.tempVector1,
+								1 / (distance * 10)
+							)
+						)
 						count++
 					}
 				}
@@ -259,18 +290,13 @@ export default class Bird {
 		}
 
 		if(count > 0) {
-			sum[0] /= count
-			sum[1] /= count
+			vec2.scale(sum, sum, 1 / count)
 			vec2.normalize(sum, sum)
-			sum[0] *= Bird.maxSpeed
-			sum[1] *= Bird.maxSpeed
+			vec2.scale(sum, sum, Bird.maxSpeed)
 
-			Bird.tempVector1[0] = sum[0] - this.velocity[0]
-			Bird.tempVector1[1] = sum[1] - this.velocity[1]
-
-			const steer = vec2.normalize(Bird.tempVector1, Bird.tempVector1)
-			steer[0] *= Bird.separateForce
-			steer[1] *= Bird.separateForce
+			const steer = vec2.sub(Bird.tempVector1, sum, this.velocity)
+			vec2.normalize(Bird.tempVector1, Bird.tempVector1)
+			vec2.scale(steer, steer, Bird.separateForce)
 
 			this.force(steer)
 		}
@@ -278,9 +304,7 @@ export default class Bird {
 
 	align() {
 		const neighborDistance = 100
-		const sum = Bird.tempVector2
-		Bird.tempVector2[0] = 0
-		Bird.tempVector2[1] = 0
+		const sum = vec2.set(Bird.tempVector2, 0, 0)
 		let count = 0
 
 		if(!this.chunk) {
@@ -299,8 +323,7 @@ export default class Bird {
 				
 				for(const bird of chunk.birds) {
 					if(bird !== this && manhattan(bird.location, this.location) < neighborDistance) {
-						sum[0] += bird.velocity[0]
-						sum[1] += bird.velocity[1]
+						vec2.add(sum, sum, bird.velocity)
 						count++
 					}
 				}
@@ -308,18 +331,13 @@ export default class Bird {
 		}
 
 		if(count > 0) {
-			sum[0] /= count
-			sum[1] /= count
+			vec2.scale(sum, sum, 1 / count)
 			vec2.normalize(sum, sum)
-			sum[0] *= Bird.maxSpeed
-			sum[1] *= Bird.maxSpeed
+			vec2.scale(sum, sum, Bird.maxSpeed)
 
-			Bird.tempVector1[0] = sum[0] - this.velocity[0]
-			Bird.tempVector1[1] = sum[1] - this.velocity[1]
-
-			const steer = vec2.normalize(Bird.tempVector1, Bird.tempVector1)
-			steer[0] *= Bird.alignForce
-			steer[1] *= Bird.alignForce
+			const steer = vec2.sub(Bird.tempVector1, sum, this.velocity)
+			vec2.normalize(steer, steer)
+			vec2.scale(steer, steer, Bird.alignForce)
 
 			this.force(steer)
 		}
