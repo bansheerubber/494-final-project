@@ -8,15 +8,42 @@ export default class ChunkManager {
 	constructor(canvas) {
 		this.canvas = canvas
 		
-		this.chunks = {}
+		this.chunksMap = {}
+		this.chunks = new Set()
 		this.chunkSize = 75
+		this._debug = false
+	}
+
+	set debug(debug) {
+		this._debug = debug
+
+		for(const chunk of this.chunks) {
+			if(chunk.birds.size > 0) {
+				debug ? chunk.showLines() : chunk.hideLines()
+			}
+		}
+	}
+
+	get debug() {
+		return this._debug
+	}
+
+	getChunkDensity() {
+		let total = 0, count = 0
+		for(const chunk of this.chunks) {
+			if(chunk.birds.size > 0) {
+				total += chunk.birds.size
+				count++
+			}
+		}
+		return total / count
 	}
 
 	getChunk(x, y) {
 		const mapToPositive = number => number >= 0 ? number * 2 : -number * 2 - 1
 		const index = ((mapToPositive(x) + mapToPositive(y)) * (mapToPositive(x) + mapToPositive(y) + 1)) / 2 + mapToPositive(y)
 
-		return this.chunks[index]
+		return this.chunksMap[index]
 	}
 
 	handle(bird) {
@@ -28,11 +55,12 @@ export default class ChunkManager {
 		const index = ((mapToPositive(x) + mapToPositive(y)) * (mapToPositive(x) + mapToPositive(y) + 1)) / 2 + mapToPositive(y)
 
 		// create new chunk if we don't have one
-		if(!this.chunks[index]) {
-			this.chunks[index] = new Chunk(this, x, y)
+		if(!this.chunksMap[index]) {
+			this.chunksMap[index] = new Chunk(this, x, y)
+			this.chunks.add(this.chunksMap[index])
 		}
 
-		const chunk = this.chunks[index]
+		const chunk = this.chunksMap[index]
 
 		if(bird.chunk !== chunk) {
 			if(bird.chunk) { // if the bird has a chunk, remove it from the old one
@@ -114,20 +142,32 @@ export class Chunk {
 	}
 
 	add(bird) {
+		if(this.birds.size == 0 && this.manager.debug) {
+			this.showLines()
+		}
+		
 		this.birds.add(bird)
 		bird.chunk = this
-
-		/*for(const line of this.lines) {
-			line.hidden = false
-		}*/
 	}
 
 	delete(bird) {
 		this.birds.delete(bird)
 		bird.chunk = null
 
-		/*for(const line of this.lines) {
+		if(this.birds.size == 0) {
+			this.hideLines()
+		}
+	}
+
+	showLines() {
+		for(const line of this.lines) {
+			line.hidden = false
+		}
+	}
+
+	hideLines() {
+		for(const line of this.lines) {
 			line.hidden = true
-		}*/
+		}
 	}
 }

@@ -13,18 +13,18 @@ glMatrix.setMatrixArrayType(Array)
 const canvas = new Canvas("gl-canvas")
 canvas.render()
 
-for(let i = 0; i < 1500; i++) {
+for(let i = 0; i < 2000; i++) {
 	const bird = new Bird(canvas)
 	bird.location = vec3.fromValues(
-		0,
-		0,
+		(Math.random() * 2 - 1) * canvas.worldWidth / 2,
+		(Math.random() * 2 - 1) * canvas.worldHeight / 2,
 		0
 	)
 
 	const angle = Math.random() * Math.PI * 2
 	bird.velocity = vec2.fromValues(
-		Math.cos(angle) * 200,
-		Math.sin(angle) * 200,
+		Math.cos(angle) * Bird.maxSpeed,
+		Math.sin(angle) * Bird.maxSpeed,
 	)
 }
 

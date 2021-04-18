@@ -41,6 +41,15 @@ export default class Line {
 		}
 	}
 
+	set scale(scale) {
+		this._scale = scale
+		this._scaleVector = vec3.fromValues(this.scale, this.scale, 1)
+	}
+
+	get scale() {
+		return this._scale
+	}
+
 	set rotation(vector) {
 		this._rotation = Math.atan2(-vector[0], vector[1])
 		this._rotationVector = vector
@@ -60,8 +69,8 @@ export default class Line {
 		const modelMatrix = mat4.fromRotationTranslationScale(
 			this.modelMatrix,
 			quat.setAxisAngle(this.rotationQuat, vec3.set(Line.temp3Vector1, 0, 0, 1), this._rotation),
-			vec3.set(Line.temp3Vector2, this.location[0], this.location[1], -0.1),
-			vec3.fromValues(this.scale, this.scale, 1)
+			vec3.set(Line.temp3Vector2, this.location[0], this.location[1], 0),
+			this._scaleVector
 		)
 
 		gl.uniformMatrix4fv(

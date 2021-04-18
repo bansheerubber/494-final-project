@@ -18,6 +18,13 @@ export default class Bird {
 		this.canvas = canvas
 		canvas.birds.add(this)
 
+		Bird.maxSpeed = 350
+		Bird.separateForce = 2500
+		Bird.alignForce = 1500
+		Bird.obstacleForce = 2000
+		Bird.wallForce = 2000
+		Bird.collisionForce = 100000
+
 		const gl = canvas.gl
 
 		this.location = vec3.fromValues(0, 0, 0)
@@ -77,8 +84,8 @@ export default class Bird {
 		this.velocity[1] += this.acceleration[1] * deltaTime + this.velocity[1] * deltaTime
 		vec2.set(this.acceleration, 0, 0) // reset acceleration on every frame(?)
 
-		if(vec2.length(this.velocity) > 200) {
-			this.velocity = vec2.scale(this.velocity, vec2.normalize(this.velocity, this.velocity), 200)
+		if(vec2.length(this.velocity) > Bird.maxSpeed) {
+			this.velocity = vec2.scale(this.velocity, vec2.normalize(this.velocity, this.velocity), Bird.maxSpeed)
 		}
 
 		// apply velocity
@@ -122,33 +129,33 @@ export default class Bird {
 		let steer
 
 		if(this.location[0] > xWall) {
-			const desired = vec2.set(Bird.tempVector2, -200, this.velocity[1])
+			const desired = vec2.set(Bird.tempVector2, -Bird.maxSpeed, this.velocity[1])
 			steer = Bird.tempVector1
 			vec2.sub(steer, desired, this.velocity)
 		}
 
 		if(this.location[0] < -xWall) {
-			const desired = vec2.set(Bird.tempVector2, 200, this.velocity[1])
+			const desired = vec2.set(Bird.tempVector2, Bird.maxSpeed, this.velocity[1])
 			steer = Bird.tempVector1
 			vec2.sub(steer, desired, this.velocity)
 		}
 
 		if(this.location[1] > yWall) {
-			const desired = vec2.set(Bird.tempVector2, this.velocity[0], -200)
+			const desired = vec2.set(Bird.tempVector2, this.velocity[0], -Bird.maxSpeed)
 			steer = Bird.tempVector1
 			vec2.sub(steer, desired, this.velocity)
 		}
 
 		if(this.location[1] < -yWall) {
-			const desired = vec2.set(Bird.tempVector2, this.velocity[0], 200)
+			const desired = vec2.set(Bird.tempVector2, this.velocity[0], Bird.maxSpeed)
 			steer = Bird.tempVector1
 			vec2.sub(steer, desired, this.velocity)
 		}
 
 		if(steer) {
 			steer = vec2.normalize(steer, steer)
-			steer[0] *= 1000
-			steer[1] *= 1000
+			steer[0] *= Bird.wallForce
+			steer[1] *= Bird.wallForce
 
 			this.force(steer)
 		}
@@ -171,7 +178,16 @@ export default class Bird {
 
 			const encounterRadius = vec2.length(normalToBall)
 
-			if(distance < minimumDistance && vec2.dot(directionToBoulder, this.velocity) > 0 && encounterRadius <= boulder.radius * 2) {
+			if(distance < boulder.radius) {
+				const steer = vec2.set(Bird.tempVector7, -directionToBoulder[0], -directionToBoulder[1])
+				steer[0] *= Bird.collisionForce
+				steer[1] *= Bird.collisionForce
+				this.force(steer)
+
+				this.location[0] = -directionToBoulder[0] / distance * boulder.radius + boulder.location[0]
+				this.location[1] = -directionToBoulder[1] / distance * boulder.radius + boulder.location[1]
+			}
+			else if(distance < minimumDistance && vec2.dot(directionToBoulder, this.velocity) > 0 && encounterRadius <= boulder.radius * 2) {
 				closestBoulder = boulder
 				minimumDistance = distance
 				direction[0] = directionToBoulder[0]
@@ -196,8 +212,8 @@ export default class Bird {
 				steer[0] = this.velocity[0] - normalToBall[0]
 				steer[1] = this.velocity[1] - normalToBall[1]
 				vec2.normalize(steer, steer)
-				steer[0] *= 1000
-				steer[1] *= 1000
+				steer[0] *= Bird.obstacleForce
+				steer[1] *= Bird.obstacleForce
 				this.force(steer)
 
 				return true
@@ -246,15 +262,15 @@ export default class Bird {
 			sum[0] /= count
 			sum[1] /= count
 			vec2.normalize(sum, sum)
-			sum[0] *= 200
-			sum[1] *= 200
+			sum[0] *= Bird.maxSpeed
+			sum[1] *= Bird.maxSpeed
 
 			Bird.tempVector1[0] = sum[0] - this.velocity[0]
 			Bird.tempVector1[1] = sum[1] - this.velocity[1]
 
 			const steer = vec2.normalize(Bird.tempVector1, Bird.tempVector1)
-			steer[0] *= 1500
-			steer[1] *= 1500
+			steer[0] *= Bird.separateForce
+			steer[1] *= Bird.separateForce
 
 			this.force(steer)
 		}
@@ -295,15 +311,15 @@ export default class Bird {
 			sum[0] /= count
 			sum[1] /= count
 			vec2.normalize(sum, sum)
-			sum[0] *= 200
-			sum[1] *= 200
+			sum[0] *= Bird.maxSpeed
+			sum[1] *= Bird.maxSpeed
 
 			Bird.tempVector1[0] = sum[0] - this.velocity[0]
 			Bird.tempVector1[1] = sum[1] - this.velocity[1]
 
 			const steer = vec2.normalize(Bird.tempVector1, Bird.tempVector1)
-			steer[0] *= 500
-			steer[1] *= 500
+			steer[0] *= Bird.alignForce
+			steer[1] *= Bird.alignForce
 
 			this.force(steer)
 		}

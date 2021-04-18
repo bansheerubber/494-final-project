@@ -64,22 +64,36 @@ export default class Canvas {
 
 		let shiftHeld = false, controlHeld = false
 		document.addEventListener("keydown", event => {
-			if(event.key == "Shift") {
-				shiftHeld = true
-			}
+			switch(event.key) {
+				case "Shift": {
+					shiftHeld = true
+					break
+				}
 
-			if(event.key == "Control") {
-				controlHeld = true
+				case "Control": {
+					controlHeld = true
+					break
+				}
+
+				case "c":
+				case "C": {
+					this.chunkManager.debug = !this.chunkManager.debug
+					break
+				}
 			}
 		})
 
 		document.addEventListener("keyup", event => {
-			if(event.key == "Shift") {
-				shiftHeld = false
-			}
+			switch(event.key) {
+				case "Shift": {
+					shiftHeld = false
+					break
+				}
 
-			if(event.key == "Control") {
-				controlHeld = false
+				case "Control": {
+					controlHeld = false
+					break
+				}
 			}
 		})
 
@@ -173,7 +187,7 @@ export default class Canvas {
 		const startTime = time ? time : 0
 		const deltaTime = Math.min(((startTime - this.lastRender) + this.lastRenderTime) / 1000, 0.1)
 
-		document.getElementById("info").innerHTML = `${(1 / deltaTime).toFixed(1)} FPS<br>${this.birds.size} boids<br>Click to move boulders<br>Ctrl+Click to add/delete a boulder<br>Shift+Click to resize a boulder`
+		document.getElementById("info").innerHTML = `${(1 / deltaTime).toFixed(1)} FPS<br>${this.chunkManager.getChunkDensity().toFixed(2)} bird density<br>${this.birds.size} boids<br>Click to move boulders<br>Ctrl+Click to add/delete a boulder<br>Shift+Click to resize a boulder<br>Press C to toggle chunk view`
 
 		// clear the screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
